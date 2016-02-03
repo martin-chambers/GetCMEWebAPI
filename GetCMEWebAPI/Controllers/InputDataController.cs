@@ -10,6 +10,9 @@ namespace GetCMEWebAPI.Controllers
 {
     /// <summary>
     /// Controller for InputData endpoints
+    /// There is no separate service for InputData - seems like overkill.
+    /// Web API converts C# returned types to aptly status-coded HttpResponseMessages wrapping the type.
+    /// See: http://www.asp.net/web-api/overview/getting-started-with-aspnet-web-api/action-results
     /// </summary>
     public class InputDataController : ApiController
     {
@@ -53,15 +56,15 @@ namespace GetCMEWebAPI.Controllers
         /// Get an InputData object for a specified Id
         /// </summary>
         /// <remarks></remarks>
-        /// <param name="Id">
+        /// <param name="id">
         /// <Description>A SHA-1 string id</Description>
         /// </param>
-        public async Task<InputData> Get(string Id)
+        public async Task<InputData> Get(string id)
         {
             InputData rv = null;
             try
             {
-                rv = await repository.GetInputDataAsync(Id);
+                rv = await repository.GetInputDataAsync(id);
                 return rv;
             }
             catch (Exception ex)
@@ -99,19 +102,19 @@ namespace GetCMEWebAPI.Controllers
         /// <summary>
         /// Delete an InputData object
         /// </summary>
-        /// <param name="Id">
+        /// <param name="id">
         /// <Description>A SHA-1 string id</Description>
         /// </param>
         [System.Web.Http.HttpDelete]        
-        public async Task<HttpResponseMessage> Delete(string Id)
+        public async Task<HttpResponseMessage> Delete(string id)
         {
-            if (Id == null)
+            if (id == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
             try
             {
-                Task<long> deleteResult = repository.RemoveInputDataAsync(Id);
+                Task<long> deleteResult = repository.RemoveInputDataAsync(id);
                 await deleteResult;
                 if (deleteResult.Result < 1)
                 {

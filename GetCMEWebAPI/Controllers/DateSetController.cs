@@ -13,6 +13,9 @@ namespace GetCMEWebAPI.Controllers
         private readonly IMongoService repository;
         /// <summary>
         /// default controller
+        /// There is no separate service for DateSet - seems like overkill.
+        /// Web API converts C# returned types to aptly status-coded HttpResponseMessages wrapping the type.
+        /// See: http://www.asp.net/web-api/overview/getting-started-with-aspnet-web-api/action-results
         /// </summary>
         public DateSetController(MongoService _repository)
         {
@@ -49,15 +52,15 @@ namespace GetCMEWebAPI.Controllers
         /// Get a DateSet object for a specified Id
         /// </summary>
         /// <remarks></remarks>
-        /// <param name="Id">
+        /// <param name="id">
         /// <Description>A SHA-1 string id</Description>
         /// </param>
-        public async Task<DateSet> Get(string Id)
+        public async Task<DateSet> Get(string id)
         {
             DateSet rv = null;
             try
             {
-                rv = await repository.GetDateSetAsync(Id);
+                rv = await repository.GetDateSetAsync(id);
                 return rv;
             }
             catch (Exception ex)
@@ -95,19 +98,19 @@ namespace GetCMEWebAPI.Controllers
         /// <summary>
         /// Delete a DateSet object
         /// </summary>
-        /// <param name="Id">
+        /// <param name="id">
         /// <Description>A SHA-1 string id</Description>
         /// </param>
         [System.Web.Http.HttpDelete]
-        public async Task<HttpResponseMessage> Delete(string Id)
+        public async Task<HttpResponseMessage> Delete(string id)
         {
-            if (Id == null)
+            if (id == null)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
             }
             try
             {
-                Task<long> deleteResult = repository.RemoveDateSetAsync(Id);
+                Task<long> deleteResult = repository.RemoveDateSetAsync(id);
                 await deleteResult;
                 if (deleteResult.Result < 1)
                 {

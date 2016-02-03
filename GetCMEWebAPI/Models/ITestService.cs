@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace GetCMEWebAPI.Models
 {
@@ -7,5 +8,8 @@ namespace GetCMEWebAPI.Models
         Task RunFTPDownloadAsync(string inputdataId, string datesetId);
         Task RunFTPDownloadAsync(string testId);
         Task RunTestAsync();
+        Task<Test> GetAsync(string Id);
+        Task<IEnumerable<Test>> GetAsync();
+        Task<Test> GetTestFromInputsAsync(string inputdataId, string datesetId);
     }
 }

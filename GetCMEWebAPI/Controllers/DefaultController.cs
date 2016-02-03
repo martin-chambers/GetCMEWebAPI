@@ -7,7 +7,8 @@ namespace GetCMEWebAPI.Controllers
     {
         // GET: Default
         /// <summary>
-        /// The default controller displays in the web root
+        /// Note: This is an MVC controller - not Web API
+        /// default controller displays in the web root and shows swagger-based documentation and assistance
         /// </summary>
         public ActionResult Index()
         {
