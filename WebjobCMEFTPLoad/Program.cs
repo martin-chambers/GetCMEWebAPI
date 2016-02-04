@@ -10,56 +10,29 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.ServiceBus.Messaging;
 using Newtonsoft.Json.Linq;
 using Microsoft.ServiceBus;
+using System.Configuration;
+using Microsoft.Azure.WebJobs.ServiceBus;
 
 namespace WebjobCMEFTPLoad
 {
-    class Program
+    public class Program
     {
-        private static string ServiceNamespace;
-        private static string sasKeyName = "RootManageSharedAccessKey";
-        private static string sasKeyValue;
+        private static string sbConnectionString = 
+            ConfigurationManager.ConnectionStrings["AzureWebJobsServiceBus"].ToString();
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            Task t = MainAsync(args);
-            t.Wait();        }
-
-        static async Task MainAsync(string[] args)
-        {
-            string testId = args[0];
-            HttpClient client = new HttpClient();
-            client.Timeout = new TimeSpan(1, 0, 0);
-            client.BaseAddress = new Uri("https://getcmewebapi.azurewebsites.net/");
-            // we can't proceed till both inputdata and dateset IDs are available - so await
-            Test test = await getTestAsync(client, testId);
-            string inputdataId = test.InputDataId;
-            string datesetId = test.DateSetId;
-            // each task will proceed without blocking the other
-            Task<DateSet> dateSetTask = getDatesetAsync(client, datesetId);
-            Task<InputData> inputdataTask = getInputdataAsync(client, inputdataId);
-            InputData data = await inputdataTask;
-            DateSet workingdates = await dateSetTask;
-
-            QueueDescription myQueue;
-            Queue();
-            
-
             JobHostConfiguration config = new JobHostConfiguration();
-            config.UseServiceBus();
+            ServiceBusConfiguration servicebusConfig = new ServiceBusConfiguration
+            {
+                ConnectionString = sbConnectionString
+            };
+            config.UseServiceBus(servicebusConfig);
             JobHost host = new JobHost(config);
             host.RunAndBlock();
         }
 
-        static void Queue()
-        {
-            // Create management credentials
-            TokenProvider credentials = TokenProvider.CreateSharedAccessSignatureTokenProvider(sasKeyName, sasKeyValue);
-            NamespaceManager namespaceClient = new NamespaceManager(ServiceBusEnvironment.CreateServiceUri("sb", ServiceNamespace, string.Empty), credentials);
-            QueueDescription myQueue;
-            MessagingFactory factory = MessagingFactory.Create(ServiceBusEnvironment.CreateServiceUri("sb", ServiceNamespace, string.Empty), credentials);
-            myQueue = namespaceClient.CreateQueue("Testqueue");
 
-        }
         static async Task<Test> getTestAsync(HttpClient client, string TestId)
         {
             string testString = await client.GetStringAsync("/api/v1/test/" + TestId);
@@ -78,6 +51,28 @@ namespace WebjobCMEFTPLoad
             string datesetString = await client.GetStringAsync("/api/v1/inputdata/" + inputdataId);
             InputData inputdata = JObject.Parse(datesetString).ToObject<InputData>();
             return inputdata;
+        }
+
+        public static async Task GetMessageAndRunAsync([ServiceBusTrigger("FTPRunQueue")] BrokeredMessage message)
+        {
+            string testId = message.Properties["TestId"].ToString(); ;
+            HttpClient client = new HttpClient();
+            client.Timeout = new TimeSpan(0, 1, 0);
+            client.BaseAddress = new Uri(ConfigurationManager.AppSettings["BaseAddress"]);
+            // we can't proceed till both inputdata and dateset IDs are available - so await
+            Task<string> testTask = client.GetStringAsync("api/v1/Test/" + testId);
+            // we need the test now ...
+            var testJsonString = await testTask;
+            Test test = JObject.Parse(testJsonString).ToObject<Test>();
+            string inputdataId = test.InputDataId;
+            string datesetId = test.DateSetId;
+            // each task will proceed without blocking the other
+            Task<DateSet> dateSetTask = getDatesetAsync(client, datesetId);
+            Task<InputData> inputdataTask = getInputdataAsync(client, inputdataId);
+            InputData data = await inputdataTask;
+            DateSet workingdates = await dateSetTask;
+            FTPClientRunner runner = new FTPClientRunner(workingdates, data, testId);
+            await runner.RunAsync();
         }
     }
 }
