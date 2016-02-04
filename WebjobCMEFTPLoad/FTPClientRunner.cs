@@ -46,7 +46,7 @@ namespace WebjobCMEFTPLoad
             return Convert.ToInt32(i);
         }
 
-        public void Run()
+        public async Task RunAsync()
         {
             // get FTPClient config values
             string host = ConfigurationManager.AppSettings["FTPHost"];
@@ -104,11 +104,11 @@ namespace WebjobCMEFTPLoad
                     while (url == "" && d <= decrementLimit)
                     {
                         filename = firstFilePart + searchDate.ToString("yyyyMMdd") + lastFilePart;
-                        client.Log("Searching for " + filename + " ... ");
+                        await client.LogAsync("Searching for " + filename + " ... ");
                         url = getUrlForFile(filename, host, user, password, client);
                         if (url == "")
                         {
-                            client.Log("Could not find file " + filename + ". Decrementing date ...");
+                            await client.LogAsync("Could not find file " + filename + ". Decrementing date ...");
                         }
                         searchDate = searchDate.Decrement();
                         d++;
@@ -116,38 +116,38 @@ namespace WebjobCMEFTPLoad
                     // still not found ?
                     if (url == "")
                     {
-                        client.Log("Input error: " + filename + " was not found in " + url + " or any of the subfolders");
+                        await client.LogAsync("Input error: " + filename + " was not found in " + url + " or any of the subfolders");
                     }
                     else
                     {
                         // FTP download
                         try
                         {
-                            client.Log(client.DownloadingSummary(filename, url, downloadDestination));
-                            client.Download(downloadDestination, filename, url);
-                            client.Log(client.DownloadedSummary(filename, url, downloadDestination));
+                            await client.LogAsync(client.DownloadingSummary(filename, url, downloadDestination));
+                            await client.DownloadAsync(downloadDestination, filename, url);
+                            await client.LogAsync(client.DownloadedSummary(filename, url, downloadDestination));
                         }
                         catch (Exception ex)
                         {
-                            client.Log(client.DownloadErrorSummary(filename, host, downloadDestination, ex.Message));
+                            await client.LogAsync(client.DownloadErrorSummary(filename, host, downloadDestination, ex.Message));
                         }
                         // Unzip
                         try
                         {
-                            client.Unzip(filename, downloadDestination, dataRoot, dataDestination, deleteZips, folderlist);
-                            client.Log(client.UnzipSummary(filename, dataDestination));
+                            await client.UnzipAsync(filename, downloadDestination, dataRoot, dataDestination, deleteZips, folderlist);
+                            Task a = client.LogAsync(client.UnzipSummary(filename, dataDestination));
+                            await a;
                         }
                         catch (Exception ex)
                         {
-                            client.Log(client.UnzipErrorSummary(filename, downloadDestination, dataDestination, ex.Message));
+                            Task a = client.LogAsync(client.UnzipErrorSummary(filename, downloadDestination, dataDestination, ex.Message));
+                            await a;
                         }
                     }
                 }
                 string azureConnection = ConfigurationManager.AppSettings["AzureWebJobsStorage"];
                 BlobManager manager = new BlobManager(azureConnection);
                 var success = manager.UploadDirectory(tempPath, TestId);
-
-
             }
         }
     }

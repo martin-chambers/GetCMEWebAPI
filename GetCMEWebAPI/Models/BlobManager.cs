@@ -21,10 +21,10 @@ namespace GetCMEWebAPI.Models
         /// <summary>
         /// Initializes a new instance of the <see cref="BlobManager" /> class.
         /// </summary>
-        /// <param name="connectionStringName">Name of the connection string in app.config or web.config file.</param>
-        public BlobManager(string connectionStringName)
+        /// <param name="connectionString">Name of the connection string in app.config or web.config file.</param>
+        public BlobManager(string connectionString)
         {
-            _account = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings[connectionStringName].ConnectionString);
+            _account = CloudStorageAccount.Parse(connectionString);
 
             _blobClient = _account.CreateCloudBlobClient();
             _blobClient.RetryPolicy = RetryPolicies.Retry(4, TimeSpan.Zero);

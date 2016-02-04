@@ -80,7 +80,7 @@ namespace WebjobCMEFTPLoad
             return rv;
         }
 
-        public void Download(string fileToDownload, string url)
+        public async Task DownloadAsync(string fileToDownload, string url)
         {
             if (_downloadfolder == "")
             {
@@ -108,10 +108,9 @@ namespace WebjobCMEFTPLoad
             request.KeepAlive = false; //close the connection when done
 
             //Streams
-            FtpWebResponse response = request.GetResponse() as FtpWebResponse;
+            FtpWebResponse response = await request.GetResponseAsync() as FtpWebResponse;            
             using (Stream reader = response.GetResponseStream())
             {
-
                 //Download to memory
                 using (MemoryStream memStream = new MemoryStream())
                 {
@@ -121,7 +120,7 @@ namespace WebjobCMEFTPLoad
                     while (true)
                     {
                         //Try to read the data
-                        int bytesRead = reader.Read(buffer, 0, buffer.Length);
+                        int bytesRead = await reader.ReadAsync(buffer, 0, buffer.Length);                        
                         if (bytesRead == 0)
                         {
                             //Nothing was read, finished downloading
@@ -173,10 +172,10 @@ namespace WebjobCMEFTPLoad
         }
 
 
-        public void Download(string downloadfolder, string fileToDownload, string url)
+        public async Task DownloadAsync(string downloadfolder, string fileToDownload, string url)
         {
             _downloadfolder = downloadfolder;
-            Download(fileToDownload, url);
+            await DownloadAsync(fileToDownload, url);
         }
 
 
@@ -197,19 +196,20 @@ namespace WebjobCMEFTPLoad
             }
         }
 
-        public void Log(string logtext)
+        public async Task LogAsync(string logtext)
         {
             string logfolder = Utility.RemoveFilenameFromFilepath(_logpath);
             folderCheckAndCreate(logfolder);
             string timeString = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             using (StreamWriter w = File.AppendText(_logpath))
             {
-                w.WriteLine(timeString + " " + logtext);
+                await w.WriteLineAsync(timeString + " " + logtext);
+                
             }
             Console.WriteLine(logtext);
         }
 
-        public void Unzip(string zipFileName, string zipSourceFolder, string dataFolder, string unzipDestinationFolder, bool deleteZips, List<string> folderList)
+        public async Task UnzipAsync(string zipFileName, string zipSourceFolder, string dataFolder, string unzipDestinationFolder, bool deleteZips, List<string> folderList)
         {
 
             foreach (string folder in folderList)
@@ -229,7 +229,7 @@ namespace WebjobCMEFTPLoad
             if (File.Exists(destinationFilePath))
             {
                 File.Delete(destinationFilePath);
-                Log("Deleted pre-existing version of file: " + zipFileName + " in " + unzipDestinationFolder);
+                await LogAsync("Deleted pre-existing version of file: " + zipFileName + " in " + unzipDestinationFolder);
             }
             using (ZipFile zip = ZipFile.Read(zipFilePath))
             {
