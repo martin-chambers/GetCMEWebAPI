@@ -41,7 +41,7 @@ namespace WebJobTestClient
             sasKeyValue = ConfigurationManager.AppSettings["SASKey"];
 
             // Get test async
-            string testId = "56b35007fdfad839d47e0c63";
+            string testId = "56b747d9fdfad82a0cfdce65";
 
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri("http://getcmewebapi.azurewebsites.net/");
@@ -70,9 +70,9 @@ namespace WebJobTestClient
             var testJsonString = await testTask;
             Test test = JObject.Parse(testJsonString).ToObject<Test>();
 
-            message.Properties.Add("Id", test.Id);
-            message.Properties.Add("TestId", test.InputDataId);
-            message.Properties.Add("DatesetId", test.DateSetId);
+            message.Properties.Add("TestId", test.Id);
+            message.Properties.Add("InputDataId", test.InputDataId);
+            message.Properties.Add("DateSetId", test.DateSetId);
             myQueueClient.Send(message);
         }
     }

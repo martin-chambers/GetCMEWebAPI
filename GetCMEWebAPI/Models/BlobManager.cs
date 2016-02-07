@@ -91,7 +91,7 @@ namespace GetCMEWebAPI.Models
             return UploadDirectory(sourceDirectory, containerName, string.Empty);
         }
 
-        private bool UploadDirectory(string sourceDirectory, string containerName, string prefixAzureFolderName)
+        public bool UploadDirectory(string sourceDirectory, string containerName, string prefixAzureFolderName)
         {
             return ExecuteWithExceptionHandlingAndReturnValue(
                 () =>

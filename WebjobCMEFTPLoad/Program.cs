@@ -60,9 +60,9 @@ namespace WebjobCMEFTPLoad
             client.Timeout = new TimeSpan(0, 1, 0);
             client.BaseAddress = new Uri(ConfigurationManager.AppSettings["BaseAddress"]);
             // we can't proceed till both inputdata and dateset IDs are available - so await
-            Task<string> testTask = client.GetStringAsync("api/v1/Test/" + testId);
+            string testJsonString = client.GetStringAsync("api/v1/Test/" + testId).Result;
             // we need the test now ...
-            var testJsonString = await testTask;
+            //var testJsonString = await testTask;
             Test test = JObject.Parse(testJsonString).ToObject<Test>();
             string inputdataId = test.InputDataId;
             string datesetId = test.DateSetId;

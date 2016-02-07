@@ -223,7 +223,7 @@ namespace WebjobCMEFTPLoad
                 string newFolder = Path.Combine(dataFolder, folderToInsert);
                 folderCheckAndCreate(newFolder);
             }
-            folderCheckAndCreate(unzipDestinationFolder); // should already be there if it's in the new folder list
+            //folderCheckAndCreate(unzipDestinationFolder); // should already be there if it's in the new folder list
             string zipFilePath = Path.Combine(zipSourceFolder, zipFileName);
             string destinationFilePath = Path.Combine(unzipDestinationFolder, zipFileName).Replace(".zip", "");
             if (File.Exists(destinationFilePath))
