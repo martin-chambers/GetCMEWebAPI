@@ -226,6 +226,7 @@ namespace GetCMEWebAPI.Controllers
                 }
                 catch(Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                     return Request.CreateResponse(HttpStatusCode.InternalServerError);
                 }
             }

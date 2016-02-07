@@ -46,16 +46,23 @@ namespace WebjobCMEFTPLoad
             return Convert.ToInt32(i);
         }
 
+        private string getTempDirectory()
+        {
+            string path = Path.GetRandomFileName();
+            Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), path));
+            return path;
+        }
+
         public async Task RunAsync()
         {
             // get FTPClient config values
             string host = ConfigurationManager.AppSettings["FTPHost"];
-            string tempPath = Path.GetTempPath();
-            string approot = Path.Combine(tempPath, "approot");
-            string workingpath = Path.Combine(tempPath, "working");
+            string tempPath = getTempDirectory(); ;
+            //string approot = Path.Combine(tempPath, "approot");
+            //string workingpath = Path.Combine(tempPath, "working");
             string downloadfolder = Path.Combine(tempPath, "Downloads");
             string datafolder = Path.Combine(tempPath, "Data");
-            string datasubfolder = Path.Combine(datafolder, "InputDataFiles");
+            string datasubfolder = "InputDataFiles";
             string logfolder = Path.Combine(tempPath, "Logs");
             string logfile = ConfigurationManager.AppSettings["LogFileName"];
             string logPath = Path.Combine(logfolder, logfile);
@@ -82,10 +89,14 @@ namespace WebjobCMEFTPLoad
             // create FTP client
             FTPClient client = new FTPClient(user, password, downloadfolder, logPath);
 
+            string azureConnection = ConfigurationManager.ConnectionStrings["AzureWebJobsStorage"].ToString();
+            BlobManager manager = new BlobManager(azureConnection);
+
             List<string> dates = DateSet.DateList;
             foreach (string line in dates)
             {
                 string basedate = line;
+                string dataRoot = Path.Combine(datafolder, basedate);
                 DateTime startdate = new DateTime(
                     Convert.ToInt32(basedate.Substring(0, 4)),
                     Convert.ToInt32(basedate.Substring(4, 2)),
@@ -96,7 +107,6 @@ namespace WebjobCMEFTPLoad
                 {
                     string url = "";
                     string downloadDestination = Path.Combine(downloadfolder, basedate);
-                    string dataRoot = Path.Combine(datafolder, basedate);
                     string dataDestination = Path.Combine(dataRoot, datasubfolder);
                     DateTime searchDate = tdates.Dates[i];
                     string filename = "";
@@ -126,6 +136,7 @@ namespace WebjobCMEFTPLoad
                             await client.LogAsync(client.DownloadingSummary(filename, url, downloadDestination));
                             await client.DownloadAsync(downloadDestination, filename, url);
                             await client.LogAsync(client.DownloadedSummary(filename, url, downloadDestination));
+
                         }
                         catch (Exception ex)
                         {
@@ -143,11 +154,9 @@ namespace WebjobCMEFTPLoad
                             Task a = client.LogAsync(client.UnzipErrorSummary(filename, downloadDestination, dataDestination, ex.Message));
                             await a;
                         }
-                    }
+                    }                    
                 }
-                string azureConnection = ConfigurationManager.AppSettings["AzureWebJobsStorage"];
-                BlobManager manager = new BlobManager(azureConnection);
-                var success = manager.UploadDirectory(tempPath, TestId);
+                var success = manager.UploadDirectory(dataRoot, TestId, basedate);
             }
         }
     }
